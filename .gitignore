@@ -2,5 +2,6 @@
 tmp/
 __pycache__
 *.FCStd
+*.FCBak
 
 
