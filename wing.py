@@ -1,9 +1,9 @@
 import FreeCAD
 from FreeCAD import Vector
 import numpy as np
-import sys
-sys.path.insert(0,'/home/tugdual/cad/')
-from airfoil import wing_section, foil_profile, generate_normal
+from sys import path
+path.append('/home/tugdual/cad/Cadwing')
+from airfoil import WingSection, FoilProfile, generate_normal
 import Draft
 import Part
 
@@ -19,7 +19,7 @@ class Wing(object):
     def load_foilprofile(self, filename, foil_name=None):
         if foil_name == None:
             foil_name = filename
-        self.baseprofiles[foil_name] = foil_profile(filename)
+        self.baseprofiles[foil_name] = FoilProfile(filename)
 
     def add_sections(self, profile_names, lead_pos, trail_pos, orientation = 1, normals = None):
 
@@ -29,7 +29,7 @@ class Wing(object):
             normal_vects = orientation*normals
 
         for name, l_pos, t_pos, normal in zip(profile_names, lead_pos, trail_pos, normal_vects):
-            sec = wing_section(self.baseprofiles[name])
+            sec = WingSection(self.baseprofiles[name])
             sec.transform(l_pos, t_pos, normal)
             self.sections += [sec]
 
@@ -86,7 +86,7 @@ if __name__ == "__main__":
 
 
     wing = Wing(DOC, "wing_example")
-    filename = "/home/tugdual/cad/hq209.dat"
+    filename = "hq209.dat"
     wing.load_foilprofile(filename)
 
 

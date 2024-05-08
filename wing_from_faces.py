@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
-# Select the edge then the face
-#
 from FreeCADGui import Selection
 from FreeCAD import Vector
 import FreeCAD
 import Draft
 import Part
 import numpy as np
-from freecad_wing import Wing
+from wing import Wing
 
 
 
@@ -143,7 +141,7 @@ def get_sections_endpoints(face1, face2, spacing, auto_spacing_coeff = 1.0, min_
 
 def test():
     wing_name = "wing_example"
-    profil_file_path = "/home/tugdual/cad/hq209.dat"
+    profil_file_path = "hq209.dat"
 
     doc = FreeCAD.ActiveDocument
     wing_objects = doc.findObjects(Label=wing_name+"*")

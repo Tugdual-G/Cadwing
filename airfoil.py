@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 from logging import raiseExceptions
 import numpy as np
-from pathlib import PurePosixPath
 import warnings
 
-class foil_profile():
+class FoilProfile():
     def __init__(self, filename, skiprows=1):
         self.filename = filename
         self.xz = np.loadtxt(filename, skiprows=skiprows)
@@ -27,7 +26,7 @@ class foil_profile():
         self.scalarprod = np.sum(pre_scalarprod, axis=1)
         self.leading_edge_idx, self.trailing_edge_idx = np.argsort(self.scalarprod)[-2:]
 
-class wing_section():
+class WingSection():
     def __init__(self, base_profile):
         self.base_prof = base_profile
 
@@ -138,11 +137,11 @@ def generate_normal(lead_pos, trail_pos):
     return norm_vect
 
 
-def test_foil_profile():
+def test_foilProfile():
     import matplotlib.pyplot as plt
 
 
-    foil = foil_profile( PurePosixPath("/home/tugdual/cad/hq209.dat"))
+    foil = FoilProfile( "hq209.dat")
 
     plt.quiver(foil.xz[:-1,0],foil.xz[:-1,1],foil.segm_vector[:,0], foil.segm_vector[:,1], angles='xy', width=0.001, scale=50)
     plt.scatter(foil.xz[:-1,0],foil.xz[:-1,1],c=foil.scalarprod, marker=".")
@@ -162,8 +161,8 @@ def test_wing_section():
         y_t = y_l
         return np.column_stack((x_l,y_l,np.zeros_like(x_l))), np.column_stack((x_t,y_t,np.zeros_like(x_l)))
 
-    foil = foil_profile( PurePosixPath("/home/tugdual/cad/hq209.dat"))
-    sec = wing_section(foil)
+    foil = FoilProfile("hq209.dat")
+    sec = WingSection(foil)
 
 
     ax = plt.figure().add_subplot(projection='3d')
@@ -195,5 +194,5 @@ def test_wing_section():
 
 
 if __name__=="__main__":
-    # test_foil_profile()
+    # test_foilProfile()
     test_wing_section()
