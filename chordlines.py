@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+#
+# This module contain functions to determine the position of
+# the wing's leading and trailing edges from a face in freecad.
+#
+#
 from FreeCADGui import Selection
 from FreeCAD import Vector
 import FreeCAD
@@ -8,8 +13,12 @@ import numpy as np
 from wing import Wing
 
 
-
 def plane_slice(plane1, face2, space, min_tip_distance, height):
+    """ Generate a new plane (plane2) *space* away from plane1
+    and locally perpendicular to face2.
+    Then computes the intersection line between plane2 and
+    face2 in order to get the chordline.
+    """
 
     length = height
 
@@ -81,10 +90,10 @@ def plane_slice(plane1, face2, space, min_tip_distance, height):
         segm_start = segm_end
         segm_end = segm_start_tmp
 
-
     return plane2, segm, np.hstack((segm_start, segm_end)), EndOfFace
 
-def get_sections_endpoints(face1, face2, spacing, auto_spacing_coeff = 1.0, min_tip_distance=1):
+def faces_to_chordlines(face1, face2, spacing, auto_spacing_coeff = 1.0, min_tip_distance=1):
+    """ return a set of chordlines along the wing span. """
 
     height = face2.BoundBox.DiagonalLength*0.2
 
@@ -153,7 +162,6 @@ def test():
         except :
             pass
 
-
     doc.recompute()
 
     #Selection.addSelectionGate("SELECT Part::Feature SUBELEMENT Face")
@@ -172,7 +180,7 @@ def test():
     face1 = sel[0].SubObjects[0]
     face2 = sel[0].SubObjects[1]
 
-    _, _, endpts = get_sections_endpoints(face1, face2, spacing=30.0, auto_spacing_coeff=1.5)
+    _, _, endpts = faces_to_chordlines(face1, face2, spacing=30.0, auto_spacing_coeff=1.5)
 
     wing = Wing(doc, wing_name)
     wing.load_foilprofile(profil_file_path)

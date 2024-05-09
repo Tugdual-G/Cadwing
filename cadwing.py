@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
+#
+# This is the main script
+#
 from FreeCADGui import Selection
 import FreeCAD
+# FreeCAD change the python path during execution so this is needed
 from sys import path
 path.append('/home/tugdual/cad/Cadwing')
-from wing_from_faces import get_sections_endpoints
+
+from chordlines import faces_to_chordlines
 from wing import Wing
 
 wing_name = "wing_example"
@@ -37,7 +42,7 @@ if len(subobjects) != 2:
 face1 = subobjects[0]
 face2 = subobjects[1]
 
-_, _, endpts = get_sections_endpoints(face1, face2, spacing=30.0, auto_spacing_coeff=1.5)
+_, _, endpts = faces_to_chordlines(face1, face2, spacing=30.0, auto_spacing_coeff=1.5)
 
 wing = Wing(doc, wing_name)
 wing.load_foilprofile(profil_file_path)
