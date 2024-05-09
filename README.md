@@ -9,12 +9,16 @@ The curvature is computed to adapt the space between sections.
 The use of multiples airfoil is possible on the same wing.
 
 ## Usage
-Two faces must be selected. 
-The first one serve as the wing root for the algorithm,
-the chord of the subsequent airfoil sections will be parallel to this face.
-The second face must the chordline surface, which gives the overall shape of the wing.
+The main script is cadwing.py.
 
-The chord surface can easily be drawn with the sketch workbench,
+Two faces must be selected in FreeCAD, or their names must be provided in the script. 
+The first one serve as the wing root plane for the algorithm,
+the chordline of the subsequent foil sections will be parallel to this face.
+The second face must be the chordline surface, which gives the overall shape of the wing.
+
+**Note** : The foil sections are perpendicular to the chordline surface.
+
+The chordline surface can easily be drawn with the sketch workbench,
 and then, using extrusion and boolean operations, it is easy to obtain a surface or a solid's face with the right shape.
 
 The leading edge and trailing edges can be swapped in the python script.

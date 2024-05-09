@@ -10,8 +10,9 @@ wing_name = "wing_example"
 profil_file_path = "/home/tugdual/cad/Cadwing/hq209.dat"
 
 doc = FreeCAD.ActiveDocument
-wing_objects = doc.findObjects(Label=wing_name+"*")
 
+# Cleaning the precedent tries
+wing_objects = doc.findObjects(Label=wing_name+"*")
 for ob in wing_objects:
     try :
         doc.removeObject(ob.Name)
@@ -20,11 +21,10 @@ for ob in wing_objects:
 
 doc.recompute()
 
-#Selection.addSelectionGate("SELECT Part::Feature SUBELEMENT Face")
-#Selection.removeSelectionGate()
+# if Needed you can select faces automatically
 #Selection.clearSelection()
 #Selection.addSelection(doc.Common,['Face3', 'Face4'])
-#
+
 selecs = Selection.getSelectionEx()
 subobjects = []
 for sel in selecs:
@@ -42,11 +42,12 @@ _, _, endpts = get_sections_endpoints(face1, face2, spacing=30.0, auto_spacing_c
 wing = Wing(doc, wing_name)
 wing.load_foilprofile(profil_file_path)
 
+# attribuates a foil shape to each sections
 names = [profil_file_path for i in range(endpts.shape[0])]
 
 wing.add_sections(names, endpts[:,:3], endpts[:,3:] , orientation=-1)
 sections = wing.make_part_sections()
 wing_obj = wing.build_wing_solid(sections)
 wing_obj.ViewObject.DisplayMode = "Shaded"
-
+wing_obj.ViewObject.ShapeColor = (0.16470588743686676, 0.800000011920929, 0.7803921699523926, 0.0) #Sky-blue color
 doc.recompute()
