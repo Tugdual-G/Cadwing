@@ -13,8 +13,8 @@ import numpy as np
 from wing import Wing
 
 
-def plane_slice(plane1, face2, space, min_tip_distance, height):
-    """ Generate a new plane (plane2) *space* away from plane1
+def face_sections(plane1_param, face2, space, min_tip_distance, height):
+    """ Generate a new plane (plane2) *space* away from the plane 1
     and locally perpendicular to face2.
     Then computes the intersection line between plane2 and
     face2 in order to get the chordline.
@@ -23,18 +23,11 @@ def plane_slice(plane1, face2, space, min_tip_distance, height):
     length = height
 
     EndOfFace = False
-    # Get the center of intersection between the two surfaces
-    line = face2.section(plane1)
-    center = line.CenterOfGravity
 
-    # center = plane1.CenterOfMass
-    uv = plane1.Surface.parameter(center)  # get the parameter u,v
-
-    plane1_normal = plane1.normalAt(uv[0], uv[1])
-    plane1_normal = np.array([plane1_normal.x, plane1_normal.y, plane1_normal.z])
+    center = plane1_param[0]
+    plane1_normal = plane1_param[1]
 
     # Move the center forward for the next plane section
-    center = np.array([center.x,center.y,center.z])
     center = center - space*plane1_normal
 
     # find the normal of the shape's face at the new point
@@ -46,12 +39,9 @@ def plane_slice(plane1, face2, space, min_tip_distance, height):
     center = face2.Surface.value(uv[0],uv[1])
     center = np.array([center.x,center.y,center.z])
 
-    if space != 0:
-        # making the next section plane perpendicular to the face
-        new_normal = plane1_normal-face2_normal*np.dot(face2_normal, plane1_normal)
-        new_normal /= np.linalg.norm(new_normal)
-    else :
-        new_normal = plane1_normal
+    # making the next section plane perpendicular to face2
+    new_normal = plane1_normal-face2_normal*np.dot(face2_normal, plane1_normal)
+    new_normal /= np.linalg.norm(new_normal)
 
     xaxis = np.cross(face2_normal, new_normal)
     xaxis /= np.linalg.norm(xaxis)
@@ -59,7 +49,7 @@ def plane_slice(plane1, face2, space, min_tip_distance, height):
     zaxis = np.cross(xaxis,new_normal)
     zaxis /= np.linalg.norm(zaxis)
 
-    if not face2.isInside(Vector(*center),0.0000001,True):
+    if not face2.isInside(Vector(*center),0.00001,True):
         doc = FreeCAD.ActiveDocument
         pt = doc.addObject("Part::Vertex", "Point_tip")
         pt.X = center[0]
@@ -91,9 +81,11 @@ def plane_slice(plane1, face2, space, min_tip_distance, height):
         segm_start = segm_end
         segm_end = segm_start_tmp
 
-    return plane2, segm, np.hstack((segm_start, segm_end)), EndOfFace
+    center = (segm_start+segm_end)/2
+    return np.vstack((center, new_normal)), np.hstack((segm_start, segm_end)), EndOfFace
 
-def faces_to_chordlines(face1, face2, spacing, auto_spacing_coeff = 1.0, min_tip_distance=0.5):
+
+def faces_to_chordlines_auto(face1, face2, spacing, auto_spacing_coeff = 1.0, min_tip_distance=0.5):
     """ return a set of chordlines along the wing span. """
 
     height = face2.BoundBox.DiagonalLength
@@ -102,36 +94,47 @@ def faces_to_chordlines(face1, face2, spacing, auto_spacing_coeff = 1.0, min_tip
     spacing_auto = spacing
     last_spacings = np.full(2,spacing_auto)
     segments = []
-    lines = []
     planes = []
-    # A plane is also a face
-    face1, line, segm, eof = plane_slice(face1, face2, 0.0, min_tip_distance, height)
-    if eof :
-        raise EOFError("Cannot move forward.")
+
+    # Get the center of intersection between the two surfaces
+    segm = face2.section(face1)
+    center = segm.CenterOfGravity
+
+    segm_vert = segm.Vertexes
+    if len(segm.Vertexes) !=2 :
+        raise EOFError("The section segment should have 2 verticies.")
+
+    segm_start = np.array([segm_vert[0].X,segm_vert[0].Y,segm_vert[0].Z])
+    segm_end = np.array([segm_vert[1].X,segm_vert[1].Y,segm_vert[1].Z])
+    segm = np.hstack((segm_start, segm_end))
+
+    uv = face1.Surface.parameter(center)  # get the parameter u,v
+    face1_normal = face1.normalAt(uv[0], uv[1])
+    face1_normal = np.array([face1_normal.x, face1_normal.y, face1_normal.z])
+
+    plane_param = np.vstack((center,face1_normal))
 
     last_segms_len[:] = np.linalg.norm(segm[3:]-segm[:3])
 
     k = 0
     eof = False
-    while not eof and k <80:
+    while not eof and k <150:
         segments += [segm]
-        lines += [line]
-        planes += [face1]
+        planes += [plane_param]
 
         # ---- Auto spacing ----
         # Evaluate the cuvature between the curent plane and the newone to set the suited spacing
         # Rolling the values
         last_segms_len[0] = np.linalg.norm(segm[3:]-segm[:3])
-        face_tmp = face1
+        plane_tmp = plane_param
         for i in range(2):
             # half step forward
-            face_tmp, line, segm, eof = plane_slice(face_tmp, face2, spacing_auto/2, min_tip_distance, height)
+            plane_tmp, segm, eof = face_sections(plane_tmp, face2, spacing_auto/2, min_tip_distance, height)
 
             if eof:
                 segments += [segm]
-                lines += [line]
-                planes += [face_tmp]
-                return planes, lines, np.array(segments)
+                planes += [plane_tmp]
+                return planes, np.array(segments)
 
             last_segms_len[i+1] = np.linalg.norm(segm[3:]-segm[:3])
             last_spacings[i] = spacing_auto/2
@@ -144,11 +147,60 @@ def faces_to_chordlines(face1, face2, spacing, auto_spacing_coeff = 1.0, min_tip
         # ---------------------
 
         print(f"{spacing_auto=}")
-        face1, line, segm, eof = plane_slice(face1, face2, spacing_auto, min_tip_distance, height)
+        plane_param, segm, eof = face_sections(plane_param, face2, spacing_auto, min_tip_distance, height)
         k += 1
 
-    return planes, lines, np.array(segments)
+    return planes, np.array(segments)
 
+def faces_to_chordlines(face1, face2, spacing_sections, min_tip_distance):
+    """ return a set of chordlines along the wing span, using the provided set of spacings."""
+
+
+    spacing_sections[:,0] = np.abs(spacing_sections[:,0])
+    height = face2.BoundBox.DiagonalLength
+
+    segments = []
+    planes = []
+
+    # Get the center of intersection between the two surfaces
+    segm = face2.section(face1)
+    center = segm.CenterOfGravity
+
+    segm_vert = segm.Vertexes
+    if len(segm.Vertexes) !=2 :
+        raise EOFError("The section segment should have 2 verticies.")
+
+    segm_start = np.array([segm_vert[0].X,segm_vert[0].Y,segm_vert[0].Z])
+    segm_end = np.array([segm_vert[1].X,segm_vert[1].Y,segm_vert[1].Z])
+    segm = np.hstack((segm_start, segm_end))
+
+    uv = face1.Surface.parameter(center)  # get the parameter u,v
+    face1_normal = face1.normalAt(uv[0], uv[1])
+    face1_normal = np.array([face1_normal.x, face1_normal.y, face1_normal.z])
+
+    plane_param = np.vstack((center,face1_normal))
+
+    spacing = spacing_sections[0,1]
+    sps_idx = 1 # Indicates the next section to come
+    k = 0
+    eof = False
+    dist = 0.0
+    while not eof and k <150:
+        if dist >= (spacing_sections[sps_idx,0]-abs(np.dot(plane_param[1], face1_normal))*spacing - 0.0001):
+            print(f"{dist =} , spacing = {spacing_sections[sps_idx,1]}")
+            # Trying to reach the begining of the next section, not very accurate for highly curved wings.
+            spacing = (spacing_sections[sps_idx,0]-dist)*abs(np.dot(plane_param[1], face1_normal))
+            sps_idx += 1
+
+        segments += [segm]
+        planes += [plane_param]
+        plane_param, segm, eof = face_sections(plane_param, face2, spacing, min_tip_distance, height)
+        spacing = spacing_sections[sps_idx-1,1]
+        dist += abs(np.dot((plane_param[0]-center),face1_normal))
+        center = plane_param[0]
+        k += 1
+
+    return planes, np.array(segments)
 
 def test():
     wing_name = "wing_example"
@@ -179,10 +231,10 @@ def test():
         print("Please select two faces,the first face must coplanar withe the the wing first section.")
         return 1
 
-    face1 = sel[0].SubObjects[0]
+    plane_param = sel[0].SubObjects[0]
     face2 = sel[0].SubObjects[1]
 
-    _, _, endpts = faces_to_chordlines(face1, face2, spacing=30.0, auto_spacing_coeff=1.5)
+    _, endpts = faces_to_chordlines_auto(plane_param, face2, spacing=30.0, auto_spacing_coeff=1.5)
 
     wing = Wing(doc, wing_name)
     wing.load_foilprofile(profil_file_path)

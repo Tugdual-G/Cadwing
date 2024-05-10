@@ -8,7 +8,7 @@ import FreeCAD
 from sys import path
 path.append('/home/tugdual/cad/Cadwing')
 
-from chordlines import faces_to_chordlines
+from chordlines import faces_to_chordlines_auto
 from wing import Wing
 
 wing_name = "wing_example"
@@ -39,7 +39,7 @@ if len(subobjects) != 2:
 face1 = subobjects[0]
 face2 = subobjects[1]
 
-_, _, endpts = faces_to_chordlines(face1, face2, spacing=40.0, auto_spacing_coeff=1.5, min_tip_distance=0.5)
+_, endpts = faces_to_chordlines_auto(face1, face2, spacing=40.0, auto_spacing_coeff=1.5, min_tip_distance=0.5)
 
 wing = Wing(doc, wing_name)
 wing.load_foilprofile(profil_file_path)
