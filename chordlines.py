@@ -47,7 +47,7 @@ def plane_slice(plane1, face2, space, min_tip_distance, height):
     center = np.array([center.x,center.y,center.z])
 
     if space != 0:
-        # making the next section plane's normal perpendicular to the face's normal
+        # making the next section plane perpendicular to the face
         new_normal = plane1_normal-face2_normal*np.dot(face2_normal, plane1_normal)
         new_normal /= np.linalg.norm(new_normal)
     else :
@@ -78,6 +78,7 @@ def plane_slice(plane1, face2, space, min_tip_distance, height):
     plane_loc = center
     plane_loc = plane_loc + length/2*xaxis + height/2*zaxis
     plane2 = Part.makePlane(height,length,Vector(*plane_loc), Vector(*new_normal), Vector(*(face2_normal)))
+
     segm = face2.section(plane2)
 
     # Orient the segment correctly
@@ -92,10 +93,10 @@ def plane_slice(plane1, face2, space, min_tip_distance, height):
 
     return plane2, segm, np.hstack((segm_start, segm_end)), EndOfFace
 
-def faces_to_chordlines(face1, face2, spacing, auto_spacing_coeff = 1.0, min_tip_distance=1):
+def faces_to_chordlines(face1, face2, spacing, auto_spacing_coeff = 1.0, min_tip_distance=0.5):
     """ return a set of chordlines along the wing span. """
 
-    height = face2.BoundBox.DiagonalLength*0.2
+    height = face2.BoundBox.DiagonalLength
 
     last_segms_len = np.zeros(3)
     spacing_auto = spacing
@@ -138,6 +139,7 @@ def faces_to_chordlines(face1, face2, spacing, auto_spacing_coeff = 1.0, min_tip
         dd_len = (last_segms_len[2]-last_segms_len[1])/last_spacings[1]
         dd_len -= (last_segms_len[1]-last_segms_len[0])/last_spacings[0]
         dd_len /= np.mean(last_spacings)
+
         spacing_auto = spacing/(1+np.abs(dd_len)*auto_spacing_coeff*spacing)
         # ---------------------
 

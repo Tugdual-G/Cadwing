@@ -19,10 +19,7 @@ doc = FreeCAD.ActiveDocument
 # Cleaning the precedent tries
 wing_objects = doc.findObjects(Label=wing_name+"*")
 for ob in wing_objects:
-    try :
-        doc.removeObject(ob.Name)
-    except :
-        pass
+    doc.removeObject(ob.Name)
 
 doc.recompute()
 
@@ -42,7 +39,7 @@ if len(subobjects) != 2:
 face1 = subobjects[0]
 face2 = subobjects[1]
 
-_, _, endpts = faces_to_chordlines(face1, face2, spacing=30.0, auto_spacing_coeff=1.5)
+_, _, endpts = faces_to_chordlines(face1, face2, spacing=40.0, auto_spacing_coeff=1.5, min_tip_distance=0.5)
 
 wing = Wing(doc, wing_name)
 wing.load_foilprofile(profil_file_path)
@@ -50,9 +47,20 @@ wing.load_foilprofile(profil_file_path)
 # attribuates a foil shape to each sections
 names = [profil_file_path for i in range(endpts.shape[0])]
 
-wing.add_sections(names, endpts[:,:3], endpts[:,3:] , orientation=-1)
+wing.add_sections(names, endpts[:,:3], endpts[:,3:] , orientation=1)
 sections = wing.make_part_sections()
-wing_obj = wing.build_wing_solid(sections)
+wing_obj, section_objs = wing.build_wing_solid(sections)
+
+
+# Cosmetics
+#
+#Hide the sections
+for sec_ob in section_objs:
+    sec_ob.ViewObject.Visibility = False
+
+# Augment rendering quality, otherwise some artefacts may appear
+wing_obj.ViewObject.Deviation = 0.1
+
 wing_obj.ViewObject.DisplayMode = "Shaded"
 wing_obj.ViewObject.ShapeColor = (0.16470588743686676, 0.800000011920929, 0.7803921699523926, 0.0) #Sky-blue color
 doc.recompute()

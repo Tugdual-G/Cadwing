@@ -59,7 +59,7 @@ class Wing(object):
         loft_obj.Sections = section_objects
         loft_obj.Solid=True
         loft_obj.Ruled=False
-        return loft_obj
+        return loft_obj, section_objects
 
 
 if __name__ == "__main__":
