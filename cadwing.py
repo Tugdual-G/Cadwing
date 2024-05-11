@@ -39,7 +39,13 @@ if len(subobjects) != 2:
 face1 = subobjects[0]
 face2 = subobjects[1]
 
+# Automatic spacing
 _, endpts = faces_to_chordlines_auto(face1, face2, spacing=40.0, auto_spacing_coeff=1.5, min_tip_distance=0.5)
+
+# If you need to provide the spacings yourself :
+# spacing_secs = np.array([[0,30],[250,5],[350,30],[950,5]])
+# _, endpts = faces_to_chordlines(face1, face2, spacing_sections=spacing_secs, min_tip_distance=0.5)
+
 
 wing = Wing(doc, wing_name)
 wing.load_foilprofile(profil_file_path)

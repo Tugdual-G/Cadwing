@@ -155,9 +155,10 @@ def faces_to_chordlines_auto(face1, face2, spacing, auto_spacing_coeff = 1.0, mi
 def faces_to_chordlines(face1, face2, spacing_sections, min_tip_distance):
     """ return a set of chordlines along the wing span, using the provided set of spacings."""
 
+    height = face2.BoundBox.DiagonalLength
 
     spacing_sections[:,0] = np.abs(spacing_sections[:,0])
-    height = face2.BoundBox.DiagonalLength
+    spacing_sections = np.vstack((spacing_sections,[height,5]))
 
     segments = []
     planes = []
