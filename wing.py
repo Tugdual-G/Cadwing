@@ -5,6 +5,7 @@ from sys import path
 path.append('/home/tugdual/cad/Cadwing')
 from airfoil import WingSection, FoilProfile, generate_normal
 import Draft
+import Sketcher
 import Part
 
 class Wing(object):
@@ -43,10 +44,18 @@ class Wing(object):
             polygon_sections +=  [poly_section]
         return polygon_sections
 
-    def draw_wire_sections(self, polygon_sections):
-        for i,sec in enumerate(polygon_sections):
-            part2d = Draft.make_wire(sec)
-            part2d.Label = f"{self.name}_section{i}"
+    def make_spline_sections(self):
+        spline_sections =  []
+        for i, sec in enumerate(self.sections):
+            points = []
+            for pt in sec.xyz:
+                points += [Vector(pt[0], pt[1], pt[2])]
+
+            spline = Part.BSplineCurve()
+            spline.interpolate(points)
+            spline_sections +=  [spline.toShape()]
+
+        return spline_sections
 
     def build_wing_solid(self, polygon_sections):
         section_objects = []
@@ -75,6 +84,10 @@ if __name__ == "__main__":
     DOC = FreeCAD.activeDocument()
     DOC_NAME = "wing"
 
+    for obj in DOC.Objects:
+        name = obj.Name
+        DOC.removeObject(name)
+
     if DOC is None:
         FreeCAD.newDocument(DOC_NAME)
         FreeCAD.setActiveDocument(DOC_NAME)
@@ -86,7 +99,7 @@ if __name__ == "__main__":
 
 
     wing = Wing(DOC, "wing_example")
-    filename = "hq209.dat"
+    filename = "/home/tugdual/cad/Cadwing/hq209.dat"
     wing.load_foilprofile(filename)
 
 
@@ -99,7 +112,6 @@ if __name__ == "__main__":
     names = [filename for i in range(len(normal))]
 
     wing.add_sections(names, xyz_ls, xyz_ts, orientation=-1)
-    sections = wing.make_part_sections()
+    sections = wing.make_spline_sections()
     wing.build_wing_solid(sections)
-    #wing.draw_wire_sections(sections)
     DOC.recompute()

@@ -54,7 +54,7 @@ wing.load_foilprofile(profil_file_path)
 names = [profil_file_path for i in range(endpts.shape[0])]
 
 wing.add_sections(names, endpts[:,:3], endpts[:,3:] , orientation=1)
-sections = wing.make_part_sections()
+sections = wing.make_spline_sections()
 wing_obj, section_objs = wing.build_wing_solid(sections)
 
 
