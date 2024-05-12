@@ -53,7 +53,47 @@ class Wing(object):
 
             spline = Part.BSplineCurve()
             spline.interpolate(points)
+
             spline_sections +=  [spline.toShape()]
+
+        return spline_sections
+
+    def make_spline_sections_segmented(self, n_segments=0):
+        spline_sections =  []
+        for i, sec in enumerate(self.sections):
+            # points = []
+            # for pt in sec.xyz:
+            #     points += [Vector(pt[0], pt[1], pt[2])]
+
+            # spline = Part.BSplineCurve()
+            # spline.interpolate(points)
+
+            splines = []
+            # lenght of the extrado segments
+
+            l_idx = sec.base_prof.leading_edge_idx
+            l_extrdo = l_idx/n_segments
+            l_intrdo = (sec.xyz.shape[0]- l_idx)/n_segments
+
+            for j in range(n_segments):
+                points = []
+                for pt in sec.xyz[int(j*l_extrdo) : int((j+1)*l_extrdo)+1]:
+                    points += [Vector(pt[0], pt[1], pt[2])]
+
+                spl = Part.BSplineCurve()
+                spl.interpolate(points)
+                splines += [spl]
+
+                points = []
+                for pt in sec.xyz[l_idx+int(j*l_intrdo): l_idx + int((j+1)*l_intrdo)+1-(j+1)//n_segments]:
+                    points += [Vector(pt[0], pt[1], pt[2])]
+
+                spl = Part.BSplineCurve()
+                spl.interpolate(points)
+                splines += [spl]
+
+            spline_sections +=  [Part.makeCompound(splines)]
+            # spline_sections +=  [spline.toShape()]
 
         return spline_sections
 
@@ -112,6 +152,6 @@ if __name__ == "__main__":
     names = [filename for i in range(len(normal))]
 
     wing.add_sections(names, xyz_ls, xyz_ts, orientation=-1)
-    sections = wing.make_spline_sections()
+    sections = wing.make_spline_sections_segmented(6)
     wing.build_wing_solid(sections)
     DOC.recompute()
