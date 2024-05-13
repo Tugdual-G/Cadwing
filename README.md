@@ -34,9 +34,10 @@ If needed, the spacing between sections can be provided with an array of the fol
  
 example :
 
- [[0  , 30], # first section from 0 to 250 mm from the root's plane with 30 mm spacing
-  [250, 10], # second section from 250 to 340 mm from the root's plane with 10 mm spacing
+ [[0  , 30], # first section from 0 to 250 mm from the root's plane with 30 mm spacing\
+  [250, 10], # second section from 250 to 340 mm from the root's plane with 10 mm spacing\
   [340, 20]] # third section from 340 mm until the tip of the wing with 20 mm spacing
+
 
 
 
